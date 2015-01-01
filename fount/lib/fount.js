@@ -20,7 +20,7 @@ function Fount () {
     { name: 'post', endpoint: '/post/:postName', method: 'getPost' } 
   ]
 
-  // We're using restify to handle all the requests
+  // We're using restify to handle all the rest
   var SERVER = restify.createServer();
 
 
@@ -84,7 +84,6 @@ function Fount () {
   this.get = propGetter;
   this.set = propSetter;
   this._options = OPTS;
-  this.methods = [];
 }
 
 
