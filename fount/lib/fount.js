@@ -4,13 +4,14 @@ var _ = require('lodash');
 var Q = require('q');
 var restify = require('restify');
 var frontmatter = require('front-matter');
+var titleCase = require('to-title-case');
 
 function Fount () {
   var _self = this;
 
   // For providing runtime options 
   var OPTS = {
-    'posts': './writing',
+    'posts': './posts',
     'port': 3868
   }
 
@@ -60,16 +61,17 @@ function Fount () {
     var port = port || OPTS['port'];
 
     // Set up routes
-    var params;
+    var params, output;
     this.ROUTES.forEach( function (route) {
       SERVER.get(route.endpoint, function (req, res, next) {
+        output = {};
         params = _.isEmpty(req.params) ? {} : req.params;
+        res.setHeader('content-type', 'application/json');
         _self.RouteMethods(route.method)(params).then( 
-          function (output) {
-          res.setHeader('content-type', 'application/json');
+          function (data) {
+          output[route.name] = data;
           res.send(output);
         }, function (reason) {
-          res.setHeader('content-type', 'application/json');
           res.send(404, reason);
         });
         return next();
@@ -128,6 +130,60 @@ Fount.prototype.Parser = function () {
   var postsDir = _self.get('posts');
   var posts = [];
 
+  // For testing a filename string
+  var filenameRegex = /(.*)-(\d{4}-\d{1,2}-\d{1,2})$/
+  var testFilename = function (filename) {
+    var filename = filename.replace('.md', '');
+    if ( filename.match(filenameRegex) ) {
+      return true;
+    }
+    return false;
+  }
+
+  // For taking a filename and returning publish date, slug, and title
+  //
+  // @param filename {String}
+  // @returns {Object} {date {Date}, slug {String}, title {String}}
+  var parseFilename = function (filename) {
+    if (!_.isString(filename)) {
+      console.error('filename must be a string');
+      return null;
+    }
+    var date, slug, title;
+    var filename = filename.replace('.md', '');
+    var parsed = filename.match(filenameRegex);
+    if (!parsed) {
+      return null;
+    }
+    // convert title into a real string
+    slug = parsed[1];
+    title = parsed[1].replace(/-/gi, ' ');
+    title = titleCase(title);
+    // convert date string to a date object
+    date = new Date(parsed[2]);
+    return { slug: slug, date: date, title: title };
+  }
+
+
+  // Used for sorting posts by time
+  //
+  // @param posts {Object}
+  var sortPostsChrono = function (posts) {
+    if (!_.isObject(posts)) {
+      console.error('Posts should be Object');
+      return null;
+    }
+    posts.sort(function (a, b) {
+      if (a.published_date > b.published_date) {
+        return 1;
+      } else if (a.published_date < b.published_date) {
+        return -1
+      }
+      return 0;
+    });
+    return posts;
+  }
+
 
   // For returning an array of posts from the posts directory. 
   // Will first look to see if posts have been stored in momory before 
@@ -140,16 +196,24 @@ Fount.prototype.Parser = function () {
       defer.resolve(posts);
       return defer.promise;
     }
-
-    var output;
+    var output, parsed, title, filesLength;
     fs.readdir(postsDir, function (err, files) {
-      files.forEach(function (file) {
-        readDocument(file).then(function (parsed) {
-          output = parsed;
-          parsed.filename = file;
-          posts.push(parsed);
+      files = _.filter(files, testFilename)
+      files.forEach(function (filename) {
+        readDocument(filename).then(function (doc) {
+          parsed = parseFilename(filename);
+          title = doc.attributes.title || parsed.title;
+          output = {
+            frontmatter: doc.attributes,
+            body: doc.body,
+            slug: parsed.slug,
+            title: title,
+            published_date: parsed.date.toString(),
+            filename: filename
+          };
+          posts.push(output);
           if (posts.length === files.length) {
-            defer.resolve(posts)
+            defer.resolve( sortPostsChrono(posts) )
           }
         });
       });
@@ -157,7 +221,8 @@ Fount.prototype.Parser = function () {
     return defer.promise;
   }
 
-  // For peeking inside a markdown doc and returning the frontmatter
+
+  // For looking inside a markdown document and returning the frontmatter
   // and raw markdown
   //
   // @param filename {String} The name of the markdown file
@@ -191,6 +256,7 @@ Fount.prototype.Parser = function () {
     });
     return defer.promise;
   }
+
 
   return {
     listPosts: listPosts,
