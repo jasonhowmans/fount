@@ -12,30 +12,45 @@ Clone the repo then install by running `npm install` followed by `node app`
 
 Return all posts: `/posts/all`
 ```
-[{
-  "attributes": {
-    "title": "Something"
-  },
-  "body": "Blah",
-  "filename": "my-first-post-2015-01-01.md"
-},
 {
-  "attributes": {
-    "title": "Something else"
-  },
-  "body": "Blah",
-  "filename": "my-first-post-2015-01-01.md"
-}, 
-...]
+  posts: [
+    {
+      frontmatter: {
+        image: "http://url.to/image.jpg"
+      },
+      body: " # Here's the thing Or is it here? ## Who knows Fin.",
+      slug: "all-the-things",
+      title: "All the Things",
+      published_date: "Wed Dec 24 2014 00:00:00 GMT+0000 (GMT)",
+      filename: "all-the-things-2014-12-24.md"
+    },
+    {
+      frontmatter: {
+        title: "A replacement title"
+      },
+      body: " Looking at a 2D projection of reality and we think we know it all.",
+      slug: "abstractions-and-stuff",
+      title: "A replacement title",
+      published_date: "Wed Oct 29 2014 00:00:00 GMT+0000 (GMT)",
+      filename: "abstractions-and-stuff-2014-10-29.md"
+    }, 
+    ...
+  ]
+}
 ```
 
 Return single post: `/post/:postName`
 ```
 {
-  "attributes": {
-    "title": "Something"
-  },
-  "body": "Blah",
-  "filename": "my-first-post-2015-01-01.md"
+  post: [{
+    frontmatter: {
+      title: "A replacement title"
+    },
+    body: " Looking at a 2D projection of reality and we think we know it all.",
+    slug: "abstractions-and-stuff",
+    title: "A replacement title",
+    published_date: "Wed Oct 29 2014 00:00:00 GMT+0000 (GMT)",
+    filename: "abstractions-and-stuff-2014-10-29.md"
+  }]
 }
 ```
