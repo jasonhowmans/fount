@@ -33,13 +33,13 @@ Return all posts: `/posts/all`
       title: "A replacement title",
       published_date: "Wed Oct 29 2014 00:00:00 GMT+0000 (GMT)",
       filename: "abstractions-and-stuff-2014-10-29.md"
-    }, 
+    },
     ...
   ]
 }
 ```
 
-Return single post: `/post/:postName`
+Return single post: `/posts/:postName`
 ```
 {
   post: [{
