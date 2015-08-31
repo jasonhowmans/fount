@@ -9,9 +9,9 @@ var newPort = 8090;
 var host = '0.0.0.0';
 var endpoints = {
   posts: '/posts/all',
-  post: '/post/what-why-when',
-  post404: '/post/nothing-here',
-  postWithTitle: '/post/this-aint-the-title'
+  post: '/posts/what-why-when',
+  post404: '/posts/nothing-here',
+  postWithTitle: '/posts/this-aint-the-title'
 }
 var numPosts = endpoints.length;
 
@@ -23,7 +23,7 @@ var trigger = function (endpoint, callback) {
     path: endpoint,
     port: newPort,
     agent: false
-    }, 
+    },
     function (res) {
     res.on('data', function (chunk) {
       data += chunk;
@@ -51,7 +51,7 @@ describe('Fount', function () {
     })
 
     it('should ignore files that arent in format title-2015-01-01.md', function () {
-      
+
     });
   })
 
@@ -65,7 +65,7 @@ describe('Fount', function () {
 
     describe('All endpoints', function () {
       it('should send content-type: application/json header', function (done) {
-        trigger( endpoints.posts, 
+        trigger( endpoints.posts,
           function (data, res) {
           expect( res.headers['content-type'] ).to.equal('application/json');
           done();
@@ -73,7 +73,7 @@ describe('Fount', function () {
       })
 
       it('should return published_date, title and slug attributes', function (done) {
-        trigger( endpoints.posts, 
+        trigger( endpoints.posts,
           function (data, res) {
           expect(data.posts[0]).to.contain.keys( ['published_date', 'slug', 'title'] );
           done();
@@ -81,7 +81,7 @@ describe('Fount', function () {
       })
 
       it('should return `title` frontmatter attribute instead of generating a title from filename', function (done) {
-        trigger( endpoints.postWithTitle, 
+        trigger( endpoints.postWithTitle,
           function (data, res) {
           expect(data.post[0].title).to.equal('This is the title');
           done();
@@ -92,17 +92,17 @@ describe('Fount', function () {
 
     describe('All posts endpoint', function () {
       it(endpoints.posts + ' should return a list of all posts as JSON', function (done) {
-        trigger( endpoints.posts, 
+        trigger( endpoints.posts,
           function (data) {
           expect(data.posts).to.be.an('array');
           expect(data.posts).to.have.length(4);
           done();
-        }) 
+        })
       })
 
       it('should order posts chronologically', function (done) {
         var last;
-        trigger( endpoints.posts, 
+        trigger( endpoints.posts,
           function (data) {
           data.posts.forEach(function (item) {
             if (!last) {
@@ -119,20 +119,20 @@ describe('Fount', function () {
 
     describe('Single post endpoint', function () {
       it(endpoints.post + ' should return a single post as JSON', function (done) {
-        trigger( endpoints.post, 
+        trigger( endpoints.post,
           function (data) {
           expect(data.post).to.be.an('array');
           expect(data.post).to.have.length(1);
           done();
-        }) 
+        })
       })
 
       it(endpoints.post404 + ' should return a 404 when post doesnt exist', function (done) {
-        trigger( endpoints.post404, 
+        trigger( endpoints.post404,
           function (data, res) {
           expect(res.statusCode).to.equal(404);
           done();
-        }) 
+        })
       })
     })
   })

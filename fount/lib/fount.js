@@ -9,16 +9,16 @@ var titleCase = require('to-title-case');
 function Fount () {
   var _self = this;
 
-  // For providing runtime options 
+  // For providing runtime options
   var OPTS = {
     'posts': './posts',
     'port': 3868
   }
 
-  // Routes are designed to be memorable 
+  // Routes are designed to be memorable
   this.ROUTES = [
     { name: 'posts', endpoint: '/posts/all', method: 'getAllPosts' },
-    { name: 'post', endpoint: '/post/:postName', method: 'getPost' } 
+    { name: 'post', endpoint: '/posts/:postName', method: 'getPost' }
   ]
 
   // We're using restify to handle all the rest
@@ -67,7 +67,7 @@ function Fount () {
         output = {};
         params = _.isEmpty(req.params) ? {} : req.params;
         res.setHeader('content-type', 'application/json');
-        _self.RouteMethods(route.method)(params).then( 
+        _self.RouteMethods(route.method)(params).then(
           function (data) {
           output[route.name] = data;
           res.send(output);
@@ -123,7 +123,7 @@ Fount.prototype.RouteMethods = function (method) {
 
 
 
-// The parser is used for extracting data from post 
+// The parser is used for extracting data from post
 // documents and exposing it nicely
 Fount.prototype.Parser = function () {
   var _self = this;
@@ -185,8 +185,8 @@ Fount.prototype.Parser = function () {
   }
 
 
-  // For returning an array of posts from the posts directory. 
-  // Will first look to see if posts have been stored in momory before 
+  // For returning an array of posts from the posts directory.
+  // Will first look to see if posts have been stored in momory before
   // actually looking inside the folder and using fs.
   //
   // @returns promise
@@ -229,9 +229,9 @@ Fount.prototype.Parser = function () {
   // @returns promise
   var readDocument = function (filename) {
     var defer = Q.defer();
-    fs.readFile(postsDir + '/' + filename, 'utf8', 
-      function (err, file) {
-      if (err) { 
+    fs.readFile(postsDir + '/' + filename, 'utf8',
+    function (err, file) {
+      if (err) {
         console.error(err);
         defer.reject()
         return defer.promise;
@@ -245,7 +245,7 @@ Fount.prototype.Parser = function () {
   var findPost = function (query) {
     var defer = Q.defer();
     listPosts().then(
-      function (posts) {
+    function (posts) {
       posts.forEach( function (post, i) {
         if (post.filename.indexOf(query) !== -1) {
           defer.resolve(post);
