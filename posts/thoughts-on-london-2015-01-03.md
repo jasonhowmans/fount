@@ -1,0 +1,3 @@
+---
+title: 'Thoughts on London'
+---

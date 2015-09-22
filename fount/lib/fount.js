@@ -1,5 +1,6 @@
 'use strict';
 var fs = require('fs');
+var moment = require('moment');
 var _ = require('lodash');
 var Q = require('q');
 var restify = require('restify');
@@ -13,17 +14,23 @@ function Fount () {
   var OPTS = {
     'posts': './posts',
     'port': 3868
-  }
+  };
 
   // Routes are designed to be memorable
   this.ROUTES = [
     { name: 'posts', endpoint: '/posts/all', method: 'getAllPosts' },
     { name: 'post', endpoint: '/posts/:postName', method: 'getPost' }
-  ]
+  ];
 
-  // We're using restify to handle all the rest
   var SERVER = restify.createServer();
 
+  // Allow requests from all origins
+  SERVER.use(
+  function accessControlAllowOrigin (req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    next();
+  }
+  );
 
   // For getting a global preference from the OPTS object
   //
@@ -39,7 +46,7 @@ function Fount () {
       console.error(key + 'doesn\'t exist in OPTS');
       return null;
     }
-  }
+  };
 
 
   // For setting a new global preference in the OPTS object
@@ -53,12 +60,12 @@ function Fount () {
     }
     OPTS[key] = value;
     return true;
-  }
+  };
 
 
   // Used for bootstrapping Fount
   var boot = function (port) {
-    var port = port || OPTS['port'];
+    port = port || OPTS.port;
 
     // Set up routes
     var params, output;
@@ -79,7 +86,8 @@ function Fount () {
     });
 
     SERVER.listen(port);
-  }
+    console.log('Server listening on port ' + port);
+  };
 
   // Public stuff
   this.boot = boot;
@@ -98,28 +106,29 @@ Fount.prototype.RouteMethods = function (method) {
     var defer = Q.defer();
     _self.Parser().listPosts().then(defer.resolve, defer.reject);
     return defer.promise;
-  }
+  };
 
   var getPost = function (params) {
     var defer = Q.defer();
     var postName = params.postName;
-    _self.Parser().findPost(postName).then(function (post) {
+    _self.Parser().findPost(postName).then(
+    function (post) {
       defer.resolve([post]);
     }, defer.reject);
     return defer.promise;
-  }
+  };
 
   var methodIndex = {
     getAllPosts: getAllPosts,
     getPost: getPost
-  }
+  };
 
   if (_.isString(method) && (method in methodIndex)) {
     return methodIndex[method];
   } else {
     return methodIndex;
   }
-}
+};
 
 
 
@@ -131,14 +140,14 @@ Fount.prototype.Parser = function () {
   var posts = [];
 
   // For testing a filename string
-  var filenameRegex = /(.*)-(\d{4}-\d{1,2}-\d{1,2})$/
+  var filenameRegex = /(.*)-(\d{4}-\d{1,2}-\d{1,2})$/;
   var testFilename = function (filename) {
-    var filename = filename.replace('.md', '');
+    filename = filename.replace('.md', '');
     if ( filename.match(filenameRegex) ) {
       return true;
     }
     return false;
-  }
+  };
 
   // For taking a filename and returning publish date, slug, and title
   //
@@ -150,7 +159,7 @@ Fount.prototype.Parser = function () {
       return null;
     }
     var date, slug, title;
-    var filename = filename.replace('.md', '');
+    filename = filename.replace('.md', '');
     var parsed = filename.match(filenameRegex);
     if (!parsed) {
       return null;
@@ -162,7 +171,7 @@ Fount.prototype.Parser = function () {
     // convert date string to a date object
     date = new Date(parsed[2]);
     return { slug: slug, date: date, title: title };
-  }
+  };
 
 
   // Used for sorting posts by time
@@ -177,12 +186,12 @@ Fount.prototype.Parser = function () {
       if (a.published_date > b.published_date) {
         return 1;
       } else if (a.published_date < b.published_date) {
-        return -1
+        return -1;
       }
       return 0;
     });
     return posts;
-  }
+  };
 
 
   // For returning an array of posts from the posts directory.
@@ -198,7 +207,7 @@ Fount.prototype.Parser = function () {
     }
     var output, parsed, title, filesLength;
     fs.readdir(postsDir, function (err, files) {
-      files = _.filter(files, testFilename)
+      files = _.filter(files, testFilename);
       files.forEach(function (filename) {
         readDocument(filename).then(function (doc) {
           parsed = parseFilename(filename);
@@ -209,17 +218,18 @@ Fount.prototype.Parser = function () {
             slug: parsed.slug,
             title: title,
             published_date: parsed.date.toString(),
+            relative_time: moment(parsed.date).fromNow(),
             filename: filename
           };
           posts.push(output);
           if (posts.length === files.length) {
-            defer.resolve( sortPostsChrono(posts) )
+            defer.resolve( sortPostsChrono(posts) );
           }
         });
       });
     });
     return defer.promise;
-  }
+  };
 
 
   // For looking inside a markdown document and returning the frontmatter
@@ -233,13 +243,13 @@ Fount.prototype.Parser = function () {
     function (err, file) {
       if (err) {
         console.error(err);
-        defer.reject()
+        defer.reject();
         return defer.promise;
       }
       defer.resolve( frontmatter(file) );
     });
     return defer.promise;
-  }
+  };
 
   // Do a search based on post slug
   var findPost = function (query) {
@@ -255,13 +265,13 @@ Fount.prototype.Parser = function () {
       });
     });
     return defer.promise;
-  }
+  };
 
 
   return {
     listPosts: listPosts,
     findPost: findPost
-  }
-}
+  };
+};
 
 module.exports = Fount;

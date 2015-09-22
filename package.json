@@ -15,6 +15,7 @@
   "dependencies": {
     "front-matter": "^0.2.0",
     "lodash": "^2.4.1",
+    "moment": "^2.10.6",
     "q": "^1.1.1",
     "restify": "^2.8.4",
     "to-title-case": "^0.1.5"
